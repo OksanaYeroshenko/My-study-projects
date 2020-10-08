@@ -1,0 +1,136 @@
+"""
+Tic tac toe game
+"""
+
+
+class Field:
+    """
+    Makes game field with two attributes: field size and game_field
+    """
+
+    def __init__(self):
+        while True:
+            self.size = input('Input field size (odd number): ')
+            if self.size.isdigit() and int(self.size) % 2 != 0:
+                break
+            else:
+                print('Bad input! Must be odd number')
+
+        self.game_field = [['-'] * (int(self.size) + 1) for i in range(0, int(self.size) + 1)]
+        self.game_field[0] = [' '] + [str(x) for x in range(0, int(self.size))]
+        i = 1
+        while i <= int(self.size):
+            self.game_field[i][0] = str(i - 1)
+            i += 1
+
+    def print_field(self):
+        """
+        Prints the game field
+        """
+        for i in self.game_field:
+            print(i, end='\n')
+
+    def check_field(self):
+        """
+        Checks the field for a victory, empty cells for the possibility of continuing the game
+        :return: Bool
+        """
+        for i in range(1, int(self.size) + 1):
+            win_str = [self.game_field[i][j] for j in range(1, int(self.size) + 1)]
+            if len(list(filter(lambda x: x == 'Y', win_str))) == int(self.size):
+                print('Player 1 wins')
+                return True
+            if len(list(filter(lambda x: x == 'X', win_str))) == int(self.size):
+                print('Player 2 wins')
+                return True
+
+        for j in range(1, int(self.size) + 1):
+            win_col = [self.game_field[i][j] for i in range(1, int(self.size) + 1)]
+            if len(list(filter(lambda x: x == 'Y', win_col))) == int(self.size):
+                print('Player 1 wins')
+                return True
+            if len(list(filter(lambda x: x == 'X', win_col))) == int(self.size):
+                print('Player 2 wins')
+                return True
+
+        win_diag = [self.game_field[i][i] for i in range(1, int(self.size) + 1)]
+        if len(list(filter(lambda x: x == 'X', win_diag))) == int(self.size):
+            print('Player 2 wins')
+            return True
+        if len(list(filter(lambda x: x == 'Y', win_diag))) == int(self.size):
+            print('Player 1 wins')
+            return True
+
+        win_diag2 = list(map(lambda i, j: self.game_field[i][j],
+                             range(int(self.size), 0, -1), range(1, int(self. size) + 1)))
+        if len(list(filter(lambda x: x == 'Y', win_diag2))) == int(self.size):
+            print('Player 1 wins')
+            return True
+        if len(list(filter(lambda x: x == 'X', win_diag2))) == int(self.size):
+            print('Player 2 wins')
+            return True
+
+        a = 0
+        for i in range(1, int(self.size) + 1):
+            for j in range(1, int(self.size) + 1):
+                if self.game_field[i][j] == '-':
+                    a += 1
+        if a == 0:
+            print('Draw!')
+            return True
+        return False
+
+
+class Player:
+    """
+    Makes player object
+    """
+    def __init__(self, mark):
+        self.mark = mark
+
+    def game_turn(self):
+        """
+        Accepts, validates and processes input from player
+        """
+        while True:
+            coord = list(map(str, input(f'Enter the coordinates of "{self.mark}" (xy): ')))
+            x = coord[0]
+            y = coord[1]
+            if not x.isdigit() or not y.isdigit():
+                print('Bad input! Must be two numbers')
+            else:
+                x, y = int(x), int(y)
+                if x > int(game_field.size) - 1 or y > int(game_field.size) - 1:
+                    print('Bad input! Invalid coordinates')
+                elif game_field.game_field[y + 1][x + 1] != '-':
+                    print('Bad input! Position is already filled')
+                else:
+                    game_field.game_field[y + 1][x + 1] = self.mark
+                    game_field.print_field()
+                    break
+
+
+class Game:
+    """
+    Makes game object
+    """
+    def game_play(self):
+        print(f'Player 1 uses "{player_1.mark}", Player 2 uses "{player_2.mark}')
+        while True:
+            player_1.game_turn()
+            if game_field.check_field():
+                break
+            player_2.game_turn()
+            if game_field.check_field():
+                break
+
+
+if __name__ == '__main__':
+    game_field = Field()
+    game_field.print_field()
+
+    player_1 = Player('Y')
+    player_2 = Player('X')
+
+    game = Game()
+    game.game_play()
