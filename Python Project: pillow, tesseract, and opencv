@@ -1,0 +1,81 @@
+from PIL import Image, ImageDraw, ImageFont
+import pytesseract
+import cv2 as cv
+import zipfile
+import re
+
+
+class Pages:
+    def __init__(self, page_image, fl_name):
+        self.page_image = page_image
+        self.fl_name = fl_name
+        self.found_words = self.find_text()
+        self.found_faces = self.find_faces()
+
+    def find_text(self):
+        img = cv.imread(self.page_image)
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        img_tr = cv.threshold(gray, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU)[1]
+        found_text_str = pytesseract.image_to_string(img_tr)
+        found_words = re.sub('\W+', ' ', found_text_str).split()
+        return found_words
+
+    def find_faces(self):
+        img = cv.imread(self.page_image)
+        gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.15, 10)
+        found_faces = []
+        img2 = Image.open(self.page_image)
+        for x, y, w, h in faces:
+            found_faces.append(img2.crop((x, y, x + w, y + h)))
+        return found_faces
+
+
+face_cascade = cv.CascadeClassifier('readonly/haarcascade_frontalface_default.xml')
+my_zip = zipfile.ZipFile('readonly/images.zip')
+obj_list = []
+
+for item in my_zip.namelist():
+    a = my_zip.open(item)
+    img = Image.open(a)
+    img.save(f'{item}')
+    obj_list.append(Pages(f'{item}', item))
+
+back_image = Image.new(mode='RGB', size=(960, 1800))
+draw_back_image = ImageDraw.Draw(back_image)
+font = ImageFont.truetype("readonly/fanwood-webfont.ttf", 35)
+key_word = 'Mark'  # input('Enter a key word to search: ')
+
+x, y = 0, 0
+for item in obj_list:
+    if key_word in item.found_words:
+        x = 0
+        if y != 0:
+            y = y + 192
+        back_text = Image.new('RGB', (960, 50), (255, 255, 255))
+        draw_text_image = ImageDraw.Draw(back_text)
+        draw_text_image.text((0, 5), f'Results found in file {item.fl_name}', fill='black', font=font,
+                             anchor=None, spacing=0, align='left')
+        back_image.paste(back_text, (x, y))
+        y = y + 50
+        if len(item.found_faces) > 0:
+            for face in item.found_faces:
+                if face.size[0] > 192 or face.size[1] > 192:
+                    face.thumbnail([192, 192])
+                back_image.paste(face, (x, y))
+                if x + face.width + face.width > back_image.width:
+                    x = 0
+                    y = y + 192
+                else:
+                    x = x + face.width
+        else:
+            back_text2 = Image.new('RGB', (960, 50), (255, 255, 255))
+            draw_text_image2 = ImageDraw.Draw(back_text2)
+            draw_text_image2.text((0, 5), f'But there were no faces in that file!', fill='black', font=font,
+                                  anchor=None, spacing=0, align='left')
+            back_image.paste(back_text2, (x, y))
+            y = y + 50
+
+cropped = back_image.crop((0, 0, 960, y + 192))
+
+display(cropped)
